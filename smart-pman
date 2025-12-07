@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Smart-Pman:
+
+packageManager=""
+
+[ ! -d './backups/' ] && mkdir -p './backups'
+[ ! -d './logs/' -o ! -e './logs/update.log' ] && mkdir -p './logs/' && touch './logs/update.log'
+
+if command -v pacman &>/dev/null; then
+    packageManager="pacman"
+elif command -v dnf &>/dev/null; then
+    packageManager="dnf"
+elif command -v pkg &>/dev/null; then
+    packageManager="apt"
+fi
+
+echo $packageManager
