@@ -17,21 +17,27 @@ elif command -v dnf &>/dev/null; then
     packageManager="dnf"
 elif command -v pkg &>/dev/null; then
     packageManager="apt"
+else
+    exit 1
 fi
 
 if [ $packageManager == "pacman" ]; then
     BACKUP_DATE="$date +%Y-%m-%d"
-    pacman -Qqe >> ./backups/pacman_$BACKUP_TIME.snapshot
+    pacman -Qqn >> "{$BACKUP_DIR}/pacman_{$BACKUP_TIME}.snapshot"
+    if [ command -v yay &>/dev/null ]; then
+        pacman -Qqm >> "{$BACKUP_DIR}/aur_{$BACKUP_TIME}.snapshot"
+    fi
     echo "[INFO] Had make backup point: pacman_$BACKUP_DATE" | tee -a $LOG_FILE
     case $1 in
         "--update")
             pacman -Syu
-            echo "[INFO] Pacman: updated" | tee -a $LOG_FILE
+            echo "[INFO] PACMAN: updated" | tee -a $LOG_FILE
             if [ command -v pipx &>/dev/null ]; then
                 pipx upgrade-all
                 echo "[INFO] PIP: updated" | tee -a $LOG_FILE
             else
                 echo "[ERROR] PIP: not update" | tee -a $LOG_FILE
+            fi
             ;;
         "--update pacman")
             pacman -Syu
@@ -43,9 +49,12 @@ if [ $packageManager == "pacman" ]; then
                 echo "[INFO] PIP: updated" | tee -a $LOG_FILE
             else
                 echo "[ERROR] PIP: not update" | tee -a $LOG_FILE
+            fi
             ;;
         "--rollback"|"--back")
-            ;;
+            LAST_BACKUP=$(ls -t $BACKUP_DIR | tr ' ' '\n' | head -1)
+            pacman -S --needed - < "$BACKUP_DIR/$LAST_BACKUP"
+            echo "[IFNO] PACMAN: Backed up"
         "--status")
             ;;
         "--clean")
