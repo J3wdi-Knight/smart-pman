@@ -5,7 +5,7 @@
 packageManager=""
 BACKUP_DIR="./backups"
 LOG_DIR="./logs"
-LOG_FILE="{$LOG_DIR}/update.log"
+LOG_FILE="${LOG_DIR}/update.log"
 
 
 [ ! -d $BACKUP_DIR ] && mkdir -p $BACKUP_DIR
@@ -21,18 +21,15 @@ else
     exit 1
 fi
 
-if [ $packageManager == "pacman" ]; then
-    BACKUP_DATE="$date +%Y-%m-%d"
-    pacman -Qqn >> "{$BACKUP_DIR}/pacman_{$BACKUP_TIME}.snapshot"
-    if [ command -v yay &>/dev/null ]; then
-        pacman -Qqm >> "{$BACKUP_DIR}/aur_{$BACKUP_TIME}.snapshot"
-    fi
+if [[ $packageManager == "pacman" ]]; then
+    BACKUP_DATE="$(date +%Y-%m-%d)"
+    pacman -Qqn >> "${BACKUP_DIR}/pacman_${BACKUP_DATE}.snapshot"
     echo "[INFO] Had make backup point: pacman_$BACKUP_DATE" | tee -a $LOG_FILE
     case $1 in
         "--update")
             pacman -Syu
             echo "[INFO] PACMAN: updated" | tee -a $LOG_FILE
-            if [ command -v pipx &>/dev/null ]; then
+            if command -v pipx &>/dev/null; then
                 pipx upgrade-all
                 echo "[INFO] PIP: updated" | tee -a $LOG_FILE
             else
@@ -44,7 +41,7 @@ if [ $packageManager == "pacman" ]; then
             echo "[INFO] Pacman: updated" | tee -a $LOG_FILE
             ;;
         "--update pip"|"--update pipx")
-            if [ command -v pipx &>/dev/null ]; then
+            if command -v pipx &>/dev/null; then
                 pipx upgrade-all
                 echo "[INFO] PIP: updated" | tee -a $LOG_FILE
             else
@@ -54,10 +51,14 @@ if [ $packageManager == "pacman" ]; then
         "--rollback"|"--back")
             LAST_BACKUP=$(ls -t $BACKUP_DIR | tr ' ' '\n' | head -1)
             pacman -S --needed - < "$BACKUP_DIR/$LAST_BACKUP"
-            echo "[IFNO] PACMAN: Backed up"
+            echo "[INFO] PACMAN: Backed up" | tee -a $LOG_FILE
+            ;;
         "--status")
+            echo "[INFO] PACMAN: $(pacman -Qu | wc -l) is available to update"
+            echo "[INFO] PIP: $(pip list | wc -l) is available to update"
             ;;
         "--clean")
+            rm -f $(ls -t $BACKUP_DIR | tr ' ' '\n' | tail -2 | tr '\n' ' ')
             ;;
     esac
-then
+fi
