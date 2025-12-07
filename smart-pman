@@ -3,9 +3,13 @@
 # Smart-Pman:
 
 packageManager=""
+BACKUP_DIR="./backups"
+LOG_DIR="./logs"
+LOG_FILE="{$LOG_DIR}/update.log"
 
-[ ! -d './backups/' ] && mkdir -p './backups'
-[ ! -d './logs/' -o ! -e './logs/update.log' ] && mkdir -p './logs/' && touch './logs/update.log'
+
+[ ! -d $BACKUP_DIR ] && mkdir -p $BACKUP_DIR
+[ ! -d $LOG_DIR -o ! -e $LOG_FILE ] && mkdir -p $LOG_DIR && touch $LOG_FILE
 
 if command -v pacman &>/dev/null; then
     packageManager="pacman"
@@ -15,4 +19,36 @@ elif command -v pkg &>/dev/null; then
     packageManager="apt"
 fi
 
-echo $packageManager
+if [ $packageManager == "pacman" ]; then
+    BACKUP_DATE="$date +%Y-%m-%d"
+    pacman -Qqe >> ./backups/pacman_$BACKUP_TIME.snapshot
+    echo "[INFO] Had make backup point: pacman_$BACKUP_DATE" | tee -a $LOG_FILE
+    case $1 in
+        "--update")
+            pacman -Syu
+            echo "[INFO] Pacman: updated" | tee -a $LOG_FILE
+            if [ command -v pipx &>/dev/null ]; then
+                pipx upgrade-all
+                echo "[INFO] PIP: updated" | tee -a $LOG_FILE
+            else
+                echo "[ERROR] PIP: not update" | tee -a $LOG_FILE
+            ;;
+        "--update pacman")
+            pacman -Syu
+            echo "[INFO] Pacman: updated" | tee -a $LOG_FILE
+            ;;
+        "--update pip"|"--update pipx")
+            if [ command -v pipx &>/dev/null ]; then
+                pipx upgrade-all
+                echo "[INFO] PIP: updated" | tee -a $LOG_FILE
+            else
+                echo "[ERROR] PIP: not update" | tee -a $LOG_FILE
+            ;;
+        "--rollback"|"--back")
+            ;;
+        "--status")
+            ;;
+        "--clean")
+            ;;
+    esac
+then
