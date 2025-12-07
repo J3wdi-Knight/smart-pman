@@ -27,7 +27,7 @@ if [[ $packageManager == "pacman" ]]; then
     echo "[INFO] Had make backup point: pacman_$BACKUP_DATE" | tee -a $LOG_FILE
     case $1 in
         "--update")
-            pacman -Syu
+            sudo pacman -Syu
             echo "[INFO] PACMAN: updated" | tee -a $LOG_FILE
             if command -v pipx &>/dev/null; then
                 pipx upgrade-all
@@ -37,7 +37,7 @@ if [[ $packageManager == "pacman" ]]; then
             fi
             ;;
         "--update-pacman")
-            pacman -Syu
+            sudo pacman -Syu
             echo "[INFO] Pacman: updated" | tee -a $LOG_FILE
             ;;
         "--update-pip"|"--update-pipx")
@@ -50,7 +50,7 @@ if [[ $packageManager == "pacman" ]]; then
             ;;
         "--rollback"|"--back")
             LAST_BACKUP=$(ls -t $BACKUP_DIR | tr ' ' '\n' | head -1)
-            pacman -S --needed - < "$BACKUP_DIR/$LAST_BACKUP"
+            sudo pacman -S --needed - < "$BACKUP_DIR/$LAST_BACKUP"
             echo "[INFO] PACMAN: Backed up" | tee -a $LOG_FILE
             ;;
         "--status")
